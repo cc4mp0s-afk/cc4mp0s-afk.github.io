@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Derivadas</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        body {
+            font: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #333;
+            color: #f4f4f4;
+        }
+
+        header {
+            font: 'Roboto', sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #454446;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        main {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode main {
+            background-color: #444;
+            color: #f4f4f4;
+        }
+
+        #calc-buttons {
+            font: 'Roboto', sans-serif;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .calc-btn {
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #454446;
+            color: white;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .calc-btn.operator {
+            background-color: #888888;
+            color: black;
+        }
+
+        .calc-btn:hover {
+            background-color: #846d6d;
+            transform: scale(1.05);
+            color: white;
+        }
+
+        .calc-btn.operator:hover {
+            background-color: #252425;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        input[type="text"],
+        button[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        button[type="submit"] {
+            background-color: #000000;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #595959;
+            transform: scale(1.01);
+        }
+
+        #derivative {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        .step {
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                margin: 10px;
+            }
+
+            main {
+                padding: 15px;
+            }
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #ffffff;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .theme-toggle:hover {
+            background-color: #808080;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        body.dark-mode .theme-toggle {
+            background-color: #665a5a;
+            color: white;
+        }
+
+        body.dark-mode .theme-toggle:hover {
+            background-color: #665a5a;
+        }
+
+        body.dark-mode .calc-btn {
+            background-color: white;
+            color: black;
+        }
+
+        body.dark-mode .calc-btn:hover {
+            background-color: #8b7b7b;
+            color: white;
+        }
+
+        body.dark-mode .calc-btn.operator {
+            background-color: rgb(126, 126, 126);
+            color: white;
+        }
+
+        body.dark-mode .calc-btn.operator:hover {
+            background-color: #232222;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.0.0/math.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>Derivadas a un click!</h1>
+    </header>
+    <button class="theme-toggle" id="theme-toggle">Modo Oscuro</button>
+    <main>
+        <form id="derivative-form" aria-labelledby="form-title">
+            <fieldset>
+                <legend id="form-title">Formulario de derivadas</legend>
+                <label for="function">Introduce una función:</label>
+                <input type="text" id="function" name="function" placeholder="e.g., x^2 + 3*x + sin(x)" aria-required="true" required><br>
+                <div id="calc-buttons">
+                    <button type="button" class="calc-btn" data-value="1">1</button>
+                    <button type="button" class="calc-btn" data-value="2">2</button>
+                    <button type="button" class="calc-btn" data-value="3">3</button>
+                    <button type="button" class="calc-btn operator" data-value="+">+</button>
+                    <button type="button" class="calc-btn" data-value="4">4</button>
+                    <button type="button" class="calc-btn" data-value="5">5</button>
+                    <button type="button" class="calc-btn" data-value="6">6</button>
+                    <button type="button" class="calc-btn operator" data-value="-">-</button>
+                    <button type="button" class="calc-btn" data-value="7">7</button>
+                    <button type="button" class="calc-btn" data-value="8">8</button>
+                    <button type="button" class="calc-btn" data-value="9">9</button>
+                    <button type="button" class="calc-btn operator" data-value="*">*</button>
+                    <button type="button" class="calc-btn" data-value="0">0</button>
+                    <button type="button" class="calc-btn operator" data-value="/">/</button>
+                    <button type="button" class="calc-btn operator" data-value="^">^</button>
+                    <button type="button" class="calc-btn operator" data-value="(">(</button>
+                    <button type="button" class="calc-btn operator" data-value=")">)</button>
+                    <button type="button" class="calc-btn operator" data-value="x">x</button>
+                    <button type="button" class="calc-btn operator" data-value="^2">^2</button>
+                    <button type="button" class="calc-btn operator" data-value="sqrt(">√</button>
+                    <button type="button" class="calc-btn operator" data-value="cbrt(">∛</button>
+                    <button type="button" class="calc-btn operator" data-value="sin">sin</button>
+                    <button type="button" class="calc-btn operator" data-value="cos">cos</button>
+                    <button type="button" class="calc-btn operator" data-value="tan">tan</button>
+                    <button type="button" class="calc-btn operator" data-value="csc">csc</button>
+                    <button type="button" class="calc-btn operator" data-value="cot">cot</button>
+                    <button type="button" class="calc-btn operator" data-value="log">log</button>
+                    <button type="button" class="calc-btn operator" data-value="ln">ln</button>
+                    <button type="button" class="calc-btn operator" data-value="exp">exp</button>
+                </div>
+                <label for="variable">Introduce la variable respecto a la cual derivar:</label>
+                <input type="text" id="variable" name="variable" placeholder="e.g., x" aria-required="true" required><br>
+                <button type="submit">Calcular Derivada</button>
+            </fieldset>
+        </form>
+        <div id="derivative" role="status" aria-live="polite"></div>
+    </main>
+
+    <script>
+        document.querySelectorAll('.calc-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const value = button.getAttribute('data-value');
+                const functionInput = document.getElementById('function');
+                functionInput.value += value;
+                functionInput.focus();
+            });
+        });
+
+        document.getElementById('derivative-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const functionString = document.getElementById('function').value;
+            const variableString = document.getElementById('variable').value;
+            const derivativeDiv = document.getElementById('derivative');
+
+            try {
+                // Parse the function and compute the derivative
+                const node = math.parse(functionString);
+                const derivative = math.derivative(node, variableString);
+                const derivativeString = math.parse(derivative.toString()).toTex();
+
+                // Generate detailed steps of the derivative
+                function getDerivativeSteps(node) {
+                    const steps = [];
+
+                    if (node.isSymbolNode) {
+                        steps.push(`La derivada de una variable respecto a sí misma es 1.`);
+                    } else if (node.isConstantNode) {
+                        steps.push(`La derivada de una constante es 0.`);
+                    } else if (node.isOperatorNode) {
+                        if (node.op === '+') {
+                            steps.push(`Regla de la Suma: La derivada de una suma es la suma de las derivadas. f(x)= a+b es f'(x)= a'+b'`);
+                            node.args.forEach(arg => steps.push(...getDerivativeSteps(arg)));
+                        } else if (node.op === '-') {
+                            steps.push(`Regla de la Suma: La derivada de una resta es la resta de las derivadas.f(x)= a-b es f'(x)= a'-b'`);
+                            node.args.forEach(arg => steps.push(...getDerivativeSteps(arg)));
+                        } else if (node.op === '*') {
+                            steps.push(`Regla del Producto: La derivada de un producto a*b es a'*b + a*b'.`);
+                            const u = node.args[0];
+                            const v = node.args[1];
+                            steps.push(`u = ${u.toString()}, v = ${v.toString()}`);
+                            steps.push(`u' = ${math.derivative(u, variableString).toString()}, v' = ${math.derivative(v, variableString).toString()}`);
+                        } else if (node.op === '/') {
+                            steps.push(`Regla del Cociente: La derivada de un cociente a/b es (a'b - ab')/b^2.`);
+                            const u = node.args[0];
+                            const v = node.args[1];
+                            steps.push(`u = ${u.toString()}, v = ${v.toString()}`);
+                            steps.push(`u' = ${math.derivative(u, variableString).toString()}, v' = ${math.derivative(v, variableString).toString()}`);
+                        } else if (node.op === '^') {
+                            steps.push(`Regla de la Potencia: La derivada de x^n es nx^(n-1).`);
+                            const base = node.args[0];
+                            const exponent = node.args[1];
+                            steps.push(`base = ${base.toString()}, exponent = ${exponent.toString()}`);
+                        }
+                    } else if (node.isFunctionNode) {
+                        const funcName = node.fn.name;
+                        if (['sin', 'cos', 'tan', 'csc', 'cot', 'log', 'ln', 'exp'].includes(funcName)) {
+                            steps.push(`Regla de la ${funcName}: La derivada de ${funcName}(x) es ${funcName}'(x).`);
+                        }
+                        steps.push(`Regla de la Cadena: La derivada de f(g(x)) es f'(g(x)) * g'(x).`);
+                        const arg = node.args[0];
+                        steps.push(`función interna = ${arg.toString()}`);
+                        steps.push(...getDerivativeSteps(arg));
+                    }
+
+                    return steps;
+                }
+
+                const stepsExplanation = getDerivativeSteps(node).map(step => `<div class="step">${step}</div>`).join('');
+
+                // Display the results
+                derivativeDiv.innerHTML = `La derivada de \\(${math.parse(functionString).toTex()}\\) con respecto a \\(${variableString}\\) es \\(${derivativeString}\\)`;
+                derivativeDiv.innerHTML += `<h2>Pasos:</h2>${stepsExplanation}`;
+                MathJax.typeset();
+            } catch (error) {
+                derivativeDiv.innerHTML = `Error: ${error.message}`;
+            }
+        });
+
+        const themeToggleButton = document.getElementById('theme-toggle');
+        themeToggleButton.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            themeToggleButton.textContent = document.body.classList.contains('dark-mode') ? 'Modo Claro' : 'Modo Oscuro';
+        });
+    </script>
+</body>
+
+</html>
