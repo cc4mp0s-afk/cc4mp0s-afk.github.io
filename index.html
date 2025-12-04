@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Uso del Cigarrillo Electrónico en Jóvenes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Chart Container Styling Constraints as per requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Limits width on large screens */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        
+        /* Custom Scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f5f5f4; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d6d3d1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a29e; 
+        }
+
+        /* Animation utilities */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals (Stone/Warm Gray base) with Muted Terra-cotta and Sage Green accents. 
+         Rationale: Creates a calm, academic, yet engaging atmosphere suitable for a health and social research topic. 
+         Background: bg-stone-50. Text: text-stone-800. Accents: orange-400 (alert/marketing), emerald-600 (health/knowledge). -->
+
+    <!-- Application Structure Plan: 
+         Structure: Single-page Dashboard with a "Narrative Scroll" layout interspersed with interactive "Data Stations".
+         1. Hero Section: Sets the context (UCAH, Study Topic).
+         2. "El Panorama" (The Overview): High-level metrics and Frequency distribution (Doughnut Chart).
+         3. "Los Motores" (The Drivers): Analysis of social and marketing factors. Interactive toggle to switch Chart views (Bar Chart).
+         4. "Percepción vs. Realidad" (The Gap): A critical look at misinformation using a Comparison Chart (Radar/Bar).
+         5. "Conclusiones y Acción": Summarized findings and actionable recommendations in an accordion style.
+         Why: This flow moves from "What is happening?" to "Why is it happening?" to "What are the risks?" and finally "What do we do?", guiding the user logically through the research findings. -->
+
+    <!-- Visualization & Content Choices:
+         1. Frequency of Use -> Goal: Inform -> Doughnut Chart -> Interaction: Hover for exact count -> Shows the dominance of recurrent use clearly.
+         2. Influencing Factors -> Goal: Compare -> Horizontal Bar Chart -> Interaction: Filter buttons (Social vs Marketing) -> Highlights the disparity between different pressure sources.
+         3. Knowledge Gap -> Goal: Contrast -> Grouped Bar Chart -> Interaction: Toggle between "Beliefs" and "Facts" -> Visually demonstrates the dangerous gap between perceived safety and actual chemical knowledge.
+         4. Recommendations -> Goal: Synthesize -> Interactive Cards -> Interaction: Click to expand details -> Prevents text overwhelm and encourages exploration of solutions.
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. All icons are Unicode or CSS/Tailwind shapes. -->
+</head>
+<body class="bg-stone-50 text-stone-800 font-sans antialiased selection:bg-orange-200 selection:text-orange-900">
+
+    <!-- Navigation / Header -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-stone-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">📊</span>
+                    <span class="font-bold text-lg tracking-tight text-stone-700">UNICAH</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <button onclick="scrollToSection('intro')" class="text-stone-600 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Inicio</button>
+                    <button onclick="scrollToSection('panorama')" class="text-stone-600 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Frecuencia</button>
+                    <button onclick="scrollToSection('factores')" class="text-stone-600 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Factores</button>
+                    <button onclick="scrollToSection('brecha')" class="text-stone-600 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Percepción</button>
+                    <button onclick="scrollToSection('acciones')" class="text-stone-600 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Recomendaciones</button>
+                </div>
+                <!-- Mobile menu button (simple implementation) -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-stone-500 hover:text-stone-900 focus:outline-none">
+                        <span class="text-2xl">☰</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu Panel -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-stone-200 absolute w-full">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <button onclick="scrollToSection('intro'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-stone-700 hover:bg-stone-100">Inicio</button>
+                <button onclick="scrollToSection('panorama'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-stone-700 hover:bg-stone-100">Frecuencia</button>
+                <button onclick="scrollToSection('factores'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-stone-700 hover:bg-stone-100">Factores</button>
+                <button onclick="scrollToSection('brecha'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-stone-700 hover:bg-stone-100">Percepción</button>
+                <button onclick="scrollToSection('acciones'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-stone-700 hover:bg-stone-100">Recomendaciones</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-20">
+
+        <!-- Hero / Intro Section -->
+        <section id="intro" class="text-center space-y-6 py-12 bg-white rounded-3xl shadow-sm border border-stone-100 fade-in">
+            <div class="inline-block bg-orange-100 text-orange-800 px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide uppercase">
+                Métodos y Técnicas de Investigación
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-stone-900 tracking-tight leading-tight">
+                Uso del Cigarrillo Electrónico<br class="hidden md:block" /> en Jóvenes Universitarios
+            </h1>
+            <p class="max-w-2xl mx-auto text-lg text-stone-600 leading-relaxed">
+                Un análisis cuantitativo sobre la influencia social, el marketing y la percepción de riesgo en estudiantes de 15 a 25 años del Campus San Jorge (UNICAH).
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 text-sm text-stone-500 pt-4 border-t border-stone-100 w-full max-w-3xl mx-auto">
+                <div class="flex items-center gap-1"><span>📍</span> UNICAH Campus San Jorge</div>
+                <div class="flex items-center gap-1"><span>👥</span> Muestra: 42 Estudiantes</div>
+                <div class="flex items-center gap-1"><span>📅</span> Diciembre 2025</div>
+            </div>
+        </section>
+
+        <!-- Section 1: Panorama (Frequency) -->
+        <section id="panorama" class="scroll-mt-24">
+            <div class="grid md:grid-cols-12 gap-8 items-start">
+                <div class="md:col-span-5 space-y-6">
+                    <div class="border-l-4 border-orange-500 pl-4">
+                        <h2 class="text-3xl font-bold text-stone-800">El Panorama Actual</h2>
+                        <p class="text-stone-500 font-medium">Frecuencia y Hábitos de Consumo</p>
+                    </div>
+                    <p class="text-stone-600 leading-relaxed">
+                        Este estudio revela que el vapeo no es una actividad aislada, sino una práctica recurrente en el campus. Una mayoría significativa de los encuestados reporta un uso habitual, lo que plantea interrogantes sobre el desarrollo de dependencia a la nicotina en etapas tempranas.
+                    </p>
+                    
+                    <!-- Key Metric Cards -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-stone-100 text-center hover:shadow-md transition-shadow">
+                            <div class="text-4xl font-bold text-orange-600">59.5%</div>
+                            <div class="text-xs text-stone-500 uppercase tracking-wide mt-1">Uso Recurrente</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-stone-100 text-center hover:shadow-md transition-shadow">
+                            <div class="text-4xl font-bold text-stone-700">11</div>
+                            <div class="text-xs text-stone-500 uppercase tracking-wide mt-1">Usuarios Diarios</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-800">
+                        <strong>💡 Dato Clave:</strong> Casi el 60% de los estudiantes utiliza el dispositivo semanal o diariamente, superando el uso experimental u ocasional.
+                    </div>
+                </div>
+
+                <div class="md:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-stone-100">
+                    <h3 class="text-lg font-semibold text-stone-800 mb-4 text-center">Distribución de la Frecuencia de Uso</h3>
+                    <!-- Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="frequencyChart"></canvas>
+                    </div>
+                    <p class="text-center text-xs text-stone-400 mt-4">Fuente: Datos recolectados de muestra n=42</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Factors (Drivers) -->
+        <section id="factores" class="scroll-mt-24 bg-stone-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-16">
+            <div class="max-w-7xl mx-auto">
+                <div class="text-center max-w-3xl mx-auto mb-12">
+                    <h2 class="text-3xl font-bold text-stone-800 mb-4">Motores del Consumo</h2>
+                    <p class="text-stone-600">
+                        ¿Qué impulsa a los jóvenes a vapear? Los datos señalan una fuerte correlación entre el entorno social, la exposición mediática y las características del producto. Analice los factores predominantes a continuación.
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-10">
+                    <!-- Interactive Controls side -->
+                    <div class="space-y-6">
+                        <h3 class="text-xl font-semibold text-stone-700">Factores de Influencia Identificados</h3>
+                        <div class="space-y-4">
+                            <button onclick="updateFactorHighlight('social')" class="factor-btn w-full text-left bg-white hover:bg-orange-50 p-5 rounded-xl shadow-sm border border-stone-200 transition-all group focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-stone-800 group-hover:text-orange-700">Influencia Social (Amigos)</span>
+                                    <span class="text-2xl">👥</span>
+                                </div>
+                                <p class="text-sm text-stone-500 mt-2">El 71.4% tiene amigos que usan el dispositivo. La presión de pares es determinante para iniciar y mantener el hábito.</p>
+                            </button>
+                            
+                            <button onclick="updateFactorHighlight('marketing')" class="factor-btn w-full text-left bg-white hover:bg-blue-50 p-5 rounded-xl shadow-sm border border-stone-200 transition-all group focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-stone-800 group-hover:text-blue-700">Publicidad e Influencers</span>
+                                    <span class="text-2xl">📱</span>
+                                </div>
+                                <p class="text-sm text-stone-500 mt-2">Un masivo 81% ha estado expuesto a promoción en redes. La normalización digital crea un entorno de alto riesgo.</p>
+                            </button>
+
+                            <button onclick="updateFactorHighlight('product')" class="factor-btn w-full text-left bg-white hover:bg-purple-50 p-5 rounded-xl shadow-sm border border-stone-200 transition-all group focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-stone-800 group-hover:text-purple-700">Atractivo del Producto (Sabores)</span>
+                                    <span class="text-2xl">🍇</span>
+                                </div>
+                                <p class="text-sm text-stone-500 mt-2">El 66.7% se siente atraído por la variedad de sabores, un factor de diseño clave para el público joven.</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chart Side -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-stone-100 flex flex-col justify-center">
+                        <div class="mb-4 flex justify-between items-end">
+                            <h3 id="factorChartTitle" class="text-lg font-bold text-stone-800">Impacto Comparativo</h3>
+                            <span class="text-xs font-mono text-stone-400 bg-stone-100 px-2 py-1 rounded">H1 & H3 Confirmadas</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="factorsChart"></canvas>
+                        </div>
+                        <div id="factor-explanation" class="mt-4 p-3 bg-stone-50 rounded text-sm text-stone-600 italic border-l-2 border-stone-300">
+                            Seleccione un factor a la izquierda para ver más detalles.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Perception vs Reality (The Gap) -->
+        <section id="brecha" class="scroll-mt-24">
+            <div class="border-l-4 border-red-500 pl-4 mb-8">
+                <h2 class="text-3xl font-bold text-stone-800">Percepción vs. Realidad</h2>
+                <p class="text-stone-500 font-medium">La peligrosa brecha de información</p>
+            </div>
+            
+            <p class="mb-8 text-stone-600 max-w-4xl">
+                Existe una desconexión crítica entre lo que los estudiantes <em>creen</em> sobre el vapeo y lo que realmente <em>saben</em> sobre sus componentes. Esta sección visualiza la "H2" (Hipótesis 2), demostrando cómo la baja percepción de riesgo facilita el consumo.
+            </p>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Stat Card 1 -->
+                <div class="bg-red-50 p-6 rounded-2xl border border-red-100 flex flex-col items-center text-center">
+                    <div class="text-5xl mb-2">🤔</div>
+                    <h4 class="text-xl font-bold text-red-800 mb-2">Creen que es "Menos Dañino"</h4>
+                    <div class="text-4xl font-extrabold text-red-600 my-4">83.3%</div>
+                    <p class="text-sm text-red-700">La gran mayoría percibe el cigarrillo electrónico como una alternativa segura al tabaco tradicional.</p>
+                </div>
+
+                <!-- Visualization Center -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-stone-700">Gráfico de Brecha Cognitiva</h3>
+                        <div class="flex gap-2 text-xs">
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-red-400"></span> Creencia Errónea</span>
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Conocimiento Real</span>
+                        </div>
+                    </div>
+                    <div class="chart-container h-64 md:h-80">
+                        <canvas id="gapChart"></canvas>
+                    </div>
+                    <p class="mt-4 text-center text-sm text-stone-500">
+                        Solo el <strong>21.4%</strong> conoce los riesgos químicos reales, mientras que el <strong>61.9%</strong> cree erróneamente que ayuda a dejar de fumar.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Conclusions & Recommendations -->
+        <section id="acciones" class="scroll-mt-24 py-12 border-t border-stone-200">
+            <div class="grid md:grid-cols-2 gap-12">
+                
+                <!-- Conclusions -->
+                <div>
+                    <h2 class="text-2xl font-bold text-stone-800 mb-6">Conclusiones del Estudio</h2>
+                    <div class="space-y-4">
+                        <div class="flex gap-4 items-start">
+                            <div class="bg-stone-200 text-stone-700 rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">1</div>
+                            <p class="text-stone-600"><strong>Impulso Social:</strong> El consumo está motivado principalmente por factores sociales y de marketing, no por decisiones informadas de salud.</p>
+                        </div>
+                        <div class="flex gap-4 items-start">
+                            <div class="bg-stone-200 text-stone-700 rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">2</div>
+                            <p class="text-stone-600"><strong>Desinformación:</strong> La falta de conocimiento químico combinada con la normalización en redes crea un "caldo de cultivo" para la adicción.</p>
+                        </div>
+                        <div class="flex gap-4 items-start">
+                            <div class="bg-stone-200 text-stone-700 rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">3</div>
+                            <p class="text-stone-600"><strong>Riesgo Latente:</strong> Sin intervención, la percepción de "bajo riesgo" continuará elevando las tasas de dependencia a la nicotina en el campus.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations Accordion -->
+                <div>
+                    <h2 class="text-2xl font-bold text-stone-800 mb-6">Recomendaciones Estratégicas</h2>
+                    <div class="space-y-3" id="accordion-container">
+                        <!-- JS will populate interactive cards here -->
+                        <div onclick="toggleAccordion(1)" class="cursor-pointer bg-white border border-stone-200 rounded-lg overflow-hidden transition-all hover:border-emerald-400 group">
+                            <div class="p-4 flex justify-between items-center bg-stone-50 group-hover:bg-emerald-50">
+                                <span class="font-semibold text-stone-700 group-hover:text-emerald-800">🎓 Educación Preventiva</span>
+                                <span class="text-stone-400 group-hover:text-emerald-600 text-xl">+</span>
+                            </div>
+                            <div id="acc-content-1" class="hidden p-4 bg-white text-stone-600 text-sm border-t border-stone-100">
+                                Implementar programas de educación para la salud en el Campus San Jorge enfocados en desmitificar los riesgos químicos y la adicción.
+                            </div>
+                        </div>
+
+                        <div onclick="toggleAccordion(2)" class="cursor-pointer bg-white border border-stone-200 rounded-lg overflow-hidden transition-all hover:border-blue-400 group">
+                            <div class="p-4 flex justify-between items-center bg-stone-50 group-hover:bg-blue-50">
+                                <span class="font-semibold text-stone-700 group-hover:text-blue-800">📢 Contraste Publicitario</span>
+                                <span class="text-stone-400 group-hover:text-blue-600 text-xl">+</span>
+                            </div>
+                            <div id="acc-content-2" class="hidden p-4 bg-white text-stone-600 text-sm border-t border-stone-100">
+                                Desarrollar campañas internas que contrarresten activamente la publicidad engañosa de influencers y redes sociales.
+                            </div>
+                        </div>
+
+                        <div onclick="toggleAccordion(3)" class="cursor-pointer bg-white border border-stone-200 rounded-lg overflow-hidden transition-all hover:border-purple-400 group">
+                            <div class="p-4 flex justify-between items-center bg-stone-50 group-hover:bg-purple-50">
+                                <span class="font-semibold text-stone-700 group-hover:text-purple-800">⚖️ Regulación y Políticas</span>
+                                <span class="text-stone-400 group-hover:text-purple-600 text-xl">+</span>
+                            </div>
+                            <div id="acc-content-3" class="hidden p-4 bg-white text-stone-600 text-sm border-t border-stone-100">
+                                Promover espacios 100% libres de vapeo en la universidad e incentivar políticas públicas nacionales para regular la venta.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-stone-800 text-stone-400 py-12 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-4">
+            <h3 class="text-white font-bold text-lg">Universidad Católica de Honduras</h3>
+            <p class="text-sm">“Nuestra Señora Reina de la Paz” — Campus San Jorge</p>
+            <div class="text-xs pt-4 border-t border-stone-700">
+                <p>Investigadores: C. Campos, S. Gonzales, D. Oyuela, B. Ortiz, G. Rivera</p>
+                <p class="mt-2">© 2025 Informe de Métodos y Técnicas de Investigación</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- DATA STORAGE ---
+        // Storing report data in JS objects for easy manipulation
+        const reportData = {
+            frequency: {
+                labels: ['Diariamente', 'Varias veces/semana', 'Ocasionalmente', 'Nunca'],
+                data: [26.2, 33.3, 23.8, 16.7],
+                raw: [11, 14, 10, 7] // n=42
+            },
+            factors: {
+                labels: ['Publicidad/Influencers', 'Amigos Usan', 'Sabores Atractivos'],
+                data: [81, 71.4, 66.7],
+                descriptions: [
+                    "Alta correlación (H1) entre ver publicidad y usar el dispositivo.",
+                    "El círculo social es el factor clave (H3) para probar y continuar.",
+                    "El diseño del producto y sus sabores juegan un rol crucial en la atracción."
+                ]
+            },
+            perception: {
+                labels: ['Cree que es menos dañino', 'Cree ayuda a dejar de fumar', 'Conoce riesgos químicos'],
+                data: [83.3, 61.9, 21.4]
+            }
+        };
+
+        // --- CHART CONFIGURATION & INITIALIZATION ---
+        // Setting up Chart.js defaults for consistent style
+        Chart.defaults.font.family = "'ui-sans-serif', 'system-ui', 'sans-serif'";
+        Chart.defaults.color = '#57534e'; // stone-600
+        
+        let frequencyChart, factorsChart, gapChart;
+
+        function initCharts() {
+            // 1. Frequency Chart (Doughnut)
+            const ctxFreq = document.getElementById('frequencyChart').getContext('2d');
+            frequencyChart = new Chart(ctxFreq, {
+                type: 'doughnut',
+                data: {
+                    labels: reportData.frequency.labels,
+                    datasets: [{
+                        data: reportData.frequency.data,
+                        backgroundColor: ['#ea580c', '#fb923c', '#fdba74', '#e7e5e4'], // orange-600 to stone-200
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${context.raw}% (${reportData.frequency.raw[context.dataIndex]} estudiantes)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 2. Factors Chart (Horizontal Bar)
+            const ctxFact = document.getElementById('factorsChart').getContext('2d');
+            factorsChart = new Chart(ctxFact, {
+                type: 'bar',
+                data: {
+                    labels: reportData.factors.labels,
+                    datasets: [{
+                        label: 'Porcentaje de Influencia',
+                        data: reportData.factors.data,
+                        backgroundColor: ['#3b82f6', '#f97316', '#a855f7'], // blue, orange, purple
+                        borderRadius: 6,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Horizontal bar
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { beginAtZero: true, max: 100, grid: { display: false } },
+                        y: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: { label: (c) => ` ${c.raw}% de los encuestados` }
+                        }
+                    }
+                }
+            });
+
+            // 3. Gap Chart (Grouped Bar comparison)
+            const ctxGap = document.getElementById('gapChart').getContext('2d');
+            gapChart = new Chart(ctxGap, {
+                type: 'bar',
+                data: {
+                    labels: ['Percepción vs Conocimiento'],
+                    datasets: [
+                        {
+                            label: 'Creen que es "Menos Dañino"',
+                            data: [83.3],
+                            backgroundColor: '#f87171', // red-400
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Creen que ayuda a dejar de fumar',
+                            data: [61.9],
+                            backgroundColor: '#fca5a5', // red-300
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Conocen riesgos químicos reales',
+                            data: [21.4],
+                            backgroundColor: '#10b981', // emerald-500
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100, title: { display: true, text: 'Porcentaje (%)' } }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: { label: (c) => ` ${c.dataset.label}: ${c.raw}%` }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- INTERACTIVITY FUNCTIONS ---
+
+        // 1. Navigation Scroll
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // 2. Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+        document.getElementById('mobile-menu-btn').addEventListener('click', toggleMobileMenu);
+
+        // 3. Factor Section Interaction (Button Clicks)
+        function updateFactorHighlight(type) {
+            const explanationBox = document.getElementById('factor-explanation');
+            let text = "";
+            let colorClass = "";
+
+            // Reset chart colors
+            const defaultColors = ['#e5e7eb', '#e5e7eb', '#e5e7eb']; // grey out
+            let newColors = [...defaultColors];
+
+            if (type === 'marketing') {
+                text = `<strong>Publicidad (81%):</strong> La hipótesis H1 fue confirmada. Existe una correlación directa entre la alta exposición a influencers y el uso frecuente.`;
+                newColors[0] = '#3b82f6'; // Blue highlight
+                explanationBox.className = "mt-4 p-4 bg-blue-50 text-blue-800 rounded border-l-4 border-blue-500 fade-in";
+            } else if (type === 'social') {
+                text = `<strong>Influencia Social (71.4%):</strong> Hipótesis H3 confirmada. Si los amigos lo hacen, la probabilidad de consumo aumenta drásticamente.`;
+                newColors[1] = '#f97316'; // Orange highlight
+                explanationBox.className = "mt-4 p-4 bg-orange-50 text-orange-800 rounded border-l-4 border-orange-500 fade-in";
+            } else if (type === 'product') {
+                text = `<strong>Sabores (66.7%):</strong> La variedad de sabores disfraza el peligro y hace el producto más atractivo para el grupo demográfico de 15-25 años.`;
+                newColors[2] = '#a855f7'; // Purple highlight
+                explanationBox.className = "mt-4 p-4 bg-purple-50 text-purple-800 rounded border-l-4 border-purple-500 fade-in";
+            }
+
+            explanationBox.innerHTML = text;
+
+            // Update Chart Colors dynamically
+            factorsChart.data.datasets[0].backgroundColor = newColors;
+            factorsChart.update();
+        }
+
+        // 4. Accordion Logic
+        function toggleAccordion(id) {
+            const content = document.getElementById(`acc-content-${id}`);
+            // Close others (optional, keeping open for now allows comparison)
+            // But let's toggle current
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                content.classList.add('block', 'fade-in');
+            } else {
+                content.classList.add('hidden');
+                content.classList.remove('block', 'fade-in');
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            
+            // Trigger animation for hero stats
+            setTimeout(() => {
+               // Optional: Add simple counting animation if needed, or CSS fade-ins
+            }, 500);
+        });
+
+    </script>
+</body>
+</html>
